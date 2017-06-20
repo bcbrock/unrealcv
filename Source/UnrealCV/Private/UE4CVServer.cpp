@@ -9,6 +9,7 @@
 #include "PluginHandler.h"
 #include "ActionHandler.h"
 #include "AliasHandler.h"
+#include "UE4CVSegmentMode.h"
 #if WITH_EDITOR
 #include "UnrealEd.h"
 #endif
@@ -141,6 +142,12 @@ bool FUE4CVServer::InitWorld()
 
 		FEngineShowFlags ShowFlags = World->GetGameViewport()->EngineShowFlags;
 		FPlayerViewMode::Get().SaveGameDefault(ShowFlags);
+
+                if (AUE4CVSegmentMode::Active()) {
+                    TArray<FString> args;
+                    args.Add(FString(TEXT("object_mask")));
+                    FPlayerViewMode::Get().SetMode(args);
+                }
 
 		CurrentWorld = World;
 	}

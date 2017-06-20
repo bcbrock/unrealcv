@@ -5,6 +5,7 @@
 #include "SceneViewport.h"
 #include "Version.h"
 #include "ColorMap.h"
+#include "UE4CVSegmentMode.h"
 
 FObjectPainter& FObjectPainter::Get()
 {
@@ -89,14 +90,45 @@ void FObjectPainter::Reset(ULevel* InLevel)
 	// This list needs to be generated everytime the game restarted.
 	check(Level);
 
+        // Normally all objects are set to be painted in different colors for
+        // view mode "object_mask". However, if the game is in
+        // UE4CVSegmentMode, and an object has been chosen to be segmented,
+        // the segmented object is painted white, and all other objects are
+        // painted black.
+        bool Segment = AUE4CVSegmentMode::Active() && SegmentedObject.Len() != 0;
+
 	uint32 ObjectIndex = 0;
 	for (AActor* Actor : Level->Actors)
 	{
 		if (Actor && IsPaintable(Actor))
 		{
-			FString ActorId = Actor->GetHumanReadableName();
+                    // NB: The change below is a hack. The actor "label" is
+                    // what is shown in the editor when you click on an
+                    // object, and this is not guaranteed to be unique, and is
+                    // only available in "development builds" (whatever that
+                    // means). As far as I can tell there is no way to get the
+                    // "name" of the object in the editor. Using the label
+                    // should work for static scenes though, and if there do
+                    // happen to be collisions, you can reassign labels in the
+                    // editor. Note that our segment-mode segmenter will
+                    // segment ALL actors with a given label, so one could
+                    // even use this behavior to segment multiple objects by
+                    // reassigning their labels to be identical.
+
+                    //FString ActorId = Actor->GetHumanReadableName();
+                    FString ActorId = Actor->GetActorLabel();
+                    
 			Id2Actor.Emplace(ActorId, Actor);
-			FColor NewColor = GetColorFromColorMap(ObjectIndex);
+                        FColor NewColor;
+                        if (Segment) {
+                            if (ActorId == SegmentedObject) {
+                                NewColor = FColor::White;
+                            } else {
+                                NewColor = FColor::Black;
+                            }
+                        } else {
+                            NewColor = GetColorFromColorMap(ObjectIndex);
+                        }
 			Id2Color.Emplace(ActorId, NewColor);
 			ObjectIndex++;
 		}
@@ -109,4 +141,12 @@ void FObjectPainter::Reset(ULevel* InLevel)
 		AActor* Actor = Id2Actor[ActorId];
 		check(PaintObject(Actor, NewColor));
 	}
+}
+
+void FObjectPainter::SetSegmentedObject(FString Object)
+{
+    SegmentedObject = Object;
+    if (FUE4CVServer::Get().GetPawn() && FUE4CVServer::Get().GetPawn()->GetLevel()) {
+        Reset(FUE4CVServer::Get().GetPawn()->GetLevel());
+    }
 }

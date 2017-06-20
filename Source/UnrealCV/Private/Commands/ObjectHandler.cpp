@@ -43,6 +43,10 @@ void FObjectCommandHandler::RegisterCommands()
 	Cmd = FDispatcherDelegate::CreateRaw(this, &FObjectCommandHandler::SetObjectRotation);
 	Help = "Set object rotation [pitch, yaw, roll]";
 	CommandDispatcher->BindCommand(TEXT("vset /object/[str]/rotation [float] [float] [float]"), Cmd, Help);
+
+	Cmd = FDispatcherDelegate::CreateRaw(this, &FObjectCommandHandler::SetObjectSegmented);
+	Help = "Set this object as the segmented object in UE4CVSegmentMode";
+	CommandDispatcher->BindCommand(TEXT("vset /object/[str]/segmented"), Cmd, Help);
 }
 
 FExecStatus FObjectCommandHandler::GetObjects(const TArray<FString>& Args)
@@ -224,4 +228,26 @@ FExecStatus FObjectCommandHandler::SetObjectRotation(const TArray<FString>& Args
 		return FExecStatus::OK();
 	}
 	return FExecStatus::InvalidArgument;
+}
+
+FExecStatus FObjectCommandHandler::SetObjectSegmented(const TArray<FString>& Args)
+{
+    if (Args.Num() == 1)
+	{
+            FString ObjectName = Args[0];
+            if (ObjectName.Len() == 0) { // This doesn't appear to work, "/object//segmented" does not parse
+                FObjectPainter::Get().SetSegmentedObject(ObjectName);
+                return FExecStatus::OK(FString::Printf(TEXT("Clearing the segmented object")));
+            }
+                    
+            AActor* Object = FObjectPainter::Get().GetObject(ObjectName);
+            if (Object == NULL)
+		{
+                    return FExecStatus::Error(FString::Printf(TEXT("Can not find object %s"), *ObjectName));
+		}
+            FObjectPainter::Get().SetSegmentedObject(ObjectName);
+            return FExecStatus::OK(FString::Printf(TEXT("The segmented object is now %s"), *ObjectName));
+
+	}
+    return FExecStatus::InvalidArgument;
 }

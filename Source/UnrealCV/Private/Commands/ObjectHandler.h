@@ -30,4 +30,7 @@ public:
 
 	/** Set object rotation */
 	FExecStatus SetObjectRotation(const TArray<FString>& Args);
+
+	/** Set object as the segmemted object */
+	FExecStatus SetObjectSegmented(const TArray<FString>& Args);
 };

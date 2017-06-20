@@ -17,6 +17,8 @@ private:
 	/** A list of paintable objects */
 	TMap<FString, AActor*> Id2Actor;
 
+        /** The segmented object, for UE4CVSegmentMode **/
+        FString SegmentedObject;
 public:
 	/** Return the singleton of FObjectPainter */
 	static FObjectPainter& Get();
@@ -38,4 +40,8 @@ public:
 
 	/** Functions to support CommandDispatcher */
 	FExecStatus SetActorColor(FString ActorId, FColor Color);
+
+        /** Segmented object in UE4CVSegmentmode **/
+        void SetSegmentedObject(FString Object);
+            
 };
